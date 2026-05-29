@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Viewport Compare</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+  :root{
+    --bg:#09090b; --surface:#18181b; --surface2:#101012; --line:#27272a; --line2:#1d1d20;
+    --ink:#fafafa; --mut:#52525b; --mut2:#a1a1aa; --accent:#ef4444;
+  }
+  *{box-sizing:border-box; margin:0; padding:0}
+  html,body{height:100%}
+  body{font-family:'Hanken Grotesk',sans-serif; background:var(--bg); color:var(--ink); -webkit-font-smoothing:antialiased}
+  .mono{font-family:'JetBrains Mono',monospace; font-variant-numeric:tabular-nums}
+  .app{display:flex; flex-direction:column; min-height:100vh}
+
+  /* nav — centered controls only */
+  header{position:sticky; top:0; z-index:20; display:flex; align-items:center; justify-content:center;
+    height:56px; padding:0 16px; border-bottom:1px solid var(--line);
+    background:rgba(9,9,11,.8); backdrop-filter:blur(8px)}
+  .navcenter{display:flex; align-items:center; gap:12px}
+
+  /* tenant segmented tabs */
+  .seg{display:flex; gap:4px; padding:4px; background:var(--surface); border:1px solid var(--line); border-radius:10px}
+  .seg button{font:500 12px/1 'Hanken Grotesk',sans-serif; color:var(--mut2); padding:7px 12px;
+    border:0; background:transparent; border-radius:7px; cursor:pointer; transition:.15s; white-space:nowrap}
+  .seg button:hover{color:var(--ink)}
+  .seg button.on{background:#2a2a2e; color:var(--ink); box-shadow:0 1px 2px rgba(0,0,0,.3)}
+  .vsep{width:1px; height:24px; background:var(--line)}
+
+  /* viewport dropdown (the hidden switcher) */
+  .vp{position:relative}
+  .vp-btn{display:flex; align-items:center; gap:8px; height:34px; padding:0 11px;
+    border:1px solid var(--line); background:var(--surface); border-radius:9px; cursor:pointer; font-family:inherit}
+  .vp-btn:hover{background:#202023}
+  .vp-btn .lab{font-size:12px; font-weight:500; color:var(--ink)}
+  .vp-btn .dim{font-size:11px; color:var(--mut2)}
+  .vp-menu{position:absolute; right:0; top:40px; width:224px; background:var(--surface); border:1px solid var(--line);
+    border-radius:12px; box-shadow:0 16px 40px -10px rgba(0,0,0,.6); padding:4px; z-index:30; display:none}
+  .vp-menu.open{display:block; animation:pop .12s ease-out}
+  @keyframes pop{from{opacity:0; transform:translateY(-4px)}to{opacity:1; transform:none}}
+  .vp-menu .head{font-size:12px; color:var(--mut2); padding:6px 8px}
+  .vp-menu .div{height:1px; background:var(--line); margin:4px 0}
+  .vp-item{display:flex; width:100%; align-items:center; justify-content:space-between; gap:16px;
+    padding:7px 8px; border:0; background:transparent; border-radius:7px; cursor:pointer; font-family:inherit; text-align:left}
+  .vp-item:hover{background:#26262a}
+  .vp-item .nm{font-size:14px; color:var(--ink)}
+  .vp-item .rt{display:flex; align-items:center; gap:8px}
+  .vp-item .rt .d{font-size:11px; color:var(--mut2)}
+
+  /* canvas — single tenant, browser hugs the chosen resolution */
+  main{flex:1; overflow:auto; padding:24px; display:flex; justify-content:center; align-items:center}
+  .frame{display:flex; flex-direction:column; min-width:260px; background:var(--surface); border:1px solid var(--line);
+    border-radius:14px; box-shadow:0 4px 24px -8px rgba(0,0,0,.5); overflow:hidden;
+    animation:rise .45s cubic-bezier(.16,1,.3,1) both; transition:width .25s ease, height .25s ease}
+  @keyframes rise{from{opacity:0; transform:translateY(10px)}to{opacity:1; transform:none}}
+  .frame-head{display:flex; align-items:center; justify-content:space-between; gap:8px; padding:9px 12px; border-bottom:1px solid var(--line2)}
+  .frame-id{display:flex; align-items:center; gap:8px; min-width:0}
+  .dots{display:flex; gap:5px; margin-right:2px}
+  .dots i{width:9px; height:9px; border-radius:50%; background:#3f3f46; display:block}
+  .frame-name{font-size:13px; font-weight:600; color:var(--ink)}
+  .chip{font-size:11px; color:var(--mut2); background:#26262a; padding:2px 6px; border-radius:5px}
+  .frame-actions{display:flex; align-items:center; gap:4px}
+  .dims{font-size:11px; color:var(--mut2); margin-right:4px}
+  .iconbtn{display:flex; width:28px; height:28px; align-items:center; justify-content:center; border:0;
+    background:transparent; color:var(--mut2); border-radius:7px; cursor:pointer}
+  .iconbtn:hover{background:#26262a; color:var(--ink)}
+  .frame-body{display:flex; justify-content:center; overflow:hidden; background:var(--surface2); padding:12px}
+  .device{position:relative; flex:none; overflow:hidden; background:#fff; border-radius:5px; box-shadow:0 0 0 1px var(--line)}
+  .device iframe{border:0; transform-origin:top left; background:#fff}
+  .loader{position:absolute; inset:0; z-index:5; display:flex; flex-direction:column; align-items:center; justify-content:center;
+    gap:8px; background:rgba(16,16,18,.85); backdrop-filter:blur(2px)}
+  .loader.hide{display:none}
+  .spin{width:20px; height:20px; border:2px solid #3f3f46; border-top-color:#e4e4e7; border-radius:50%; animation:spin .8s linear infinite}
+  @keyframes spin{to{transform:rotate(360deg)}}
+  .loader span{font:400 10px/1 'JetBrains Mono',monospace; letter-spacing:.1em; text-transform:uppercase; color:var(--mut2)}
+</style>
+</head>
+<body>
+<div class="app">
+  <header>
+    <div class="navcenter">
+      <div class="seg" id="seg"></div>
+      <div class="vsep"></div>
+      <div class="vp">
+        <button class="vp-btn" id="vpBtn">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#a1a1aa" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg>
+          <span class="lab" id="vpLab"></span>
+          <span class="dim mono" id="vpDim"></span>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#71717a" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+        </button>
+        <div class="vp-menu" id="vpMenu">
+          <div class="head">Screen size</div>
+          <div class="div"></div>
+          <div id="vpItems"></div>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main><div id="stage"></div></main>
+</div>
+
+<script>
+  const TENANTS = [
+    { id:"dev5", label:"Rally TV",  locale:"en",    url:"https://dtv-dev-5.redbull.tv/en" },
+    { id:"dev8", label:"RBTV",      locale:"en_US", url:"https://dtv-dev-8.redbull.tv/en_US" },
+    { id:"dev7", label:"Servus TV", locale:"de",    url:"https://dtv-dev-7.redbull.tv/de" },
+  ];
+  const VIEWPORTS = [
+    { id:"4k",   label:"4K",           w:3840, h:2160 },
+    { id:"2k",   label:"2K / QHD",     w:2560, h:1440 },
+    { id:"fhd",  label:"Full HD",      w:1920, h:1080 },
+    { id:"mbp",  label:"MacBook 1440", w:1440, h:900  },
+    { id:"12in", label:'12" Laptop',   w:1280, h:800  },
+  ];
+  const ICON_RELOAD='<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/></svg>';
+  const ICON_EXT='<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h6v6"/><path d="M10 14 21 3"/><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/></svg>';
+  const ICON_CHECK='<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fafafa" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>';
+
+  let state = { tenant:"dev5", vpId:"fhd" };
+  const vpOf = () => VIEWPORTS.find(v => v.id === state.vpId);
+  const tenantOf = () => TENANTS.find(t => t.id === state.tenant);
+  const $ = s => document.querySelector(s);
+
+  function renderSeg(){
+    $("#seg").innerHTML = TENANTS.map(t=>`<button data-id="${t.id}" class="${state.tenant===t.id?'on':''}">${t.label}</button>`).join("");
+    $("#seg").querySelectorAll("button").forEach(b=>b.onclick=()=>{ state.tenant=b.dataset.id; renderSeg(); renderStage(); });
+  }
+
+  function renderVp(){
+    const vp = vpOf();
+    $("#vpLab").textContent = vp.label;
+    $("#vpDim").textContent = vp.w+"×"+vp.h;
+    $("#vpItems").innerHTML = VIEWPORTS.map(v=>`
+      <button class="vp-item" data-id="${v.id}">
+        <span class="nm">${v.label}</span>
+        <span class="rt"><span class="d mono">${v.w}×${v.h}</span>${v.id===state.vpId?ICON_CHECK:''}</span>
+      </button>`).join("");
+    $("#vpItems").querySelectorAll(".vp-item").forEach(b=>b.onclick=()=>{
+      state.vpId=b.dataset.id; $("#vpMenu").classList.remove("open"); renderVp(); layout();
+    });
+  }
+  $("#vpBtn").onclick = e => { e.stopPropagation(); $("#vpMenu").classList.toggle("open"); };
+  document.addEventListener("click", e => { if(!$(".vp").contains(e.target)) $("#vpMenu").classList.remove("open"); });
+
+  // size the browser frame to the chosen resolution, fitting available width
+  function layout(){
+    const frame = $(".frame"); if(!frame) return;
+    const vp = vpOf();
+    const main = $("main");
+    const availW = main.clientWidth - 48;                 // main h-padding
+    const availH = main.clientHeight - 48 - 46 - 24 - 6;  // main v-pad, frame head, body pad, breathing
+    let scale = Math.min(1, availW/vp.w, availH/vp.h);
+    if(!(scale>0)) scale = 0.3;
+    const dispW = Math.round(vp.w*scale), dispH = Math.round(vp.h*scale);
+    const dev = frame.querySelector(".device");
+    const ifr = frame.querySelector("iframe");
+    dev.style.width = dispW+"px";
+    dev.style.height = dispH+"px";
+    ifr.style.width = vp.w+"px";
+    ifr.style.height = vp.h+"px";
+    ifr.style.transform = "scale("+scale+")";
+    frame.style.width = Math.max(dispW + 24, 260) + "px";
+    frame.querySelector(".dims").textContent = vp.w+"×"+vp.h+" · "+Math.round(scale*100)+"%";
+  }
+
+  let ro;
+  function renderStage(){
+    const t = tenantOf();
+    $("#stage").innerHTML = `
+      <div class="frame" data-url="${t.url}">
+        <div class="frame-head">
+          <div class="frame-id">
+            <span class="dots"><i></i><i></i><i></i></span>
+            <span class="frame-name">${t.label}</span><span class="chip mono">${t.locale}</span>
+          </div>
+          <div class="frame-actions">
+            <span class="dims mono"></span>
+            <button class="iconbtn" data-act="reload" title="Reload">${ICON_RELOAD}</button>
+            <button class="iconbtn" data-act="open" title="Open at this size">${ICON_EXT}</button>
+          </div>
+        </div>
+        <div class="frame-body">
+          <div class="device">
+            <div class="loader"><div class="spin"></div><span>loading</span></div>
+            <iframe src="${t.url}" title="${t.label}"></iframe>
+          </div>
+        </div>
+      </div>`;
+    const frame = $(".frame");
+    const ifr = frame.querySelector("iframe");
+    ifr.addEventListener("load", ()=> frame.querySelector(".loader").classList.add("hide"));
+    frame.querySelector('[data-act="reload"]').onclick = ()=>{ frame.querySelector(".loader").classList.remove("hide"); ifr.src = ifr.src; };
+    frame.querySelector('[data-act="open"]').onclick = ()=>{
+      const vp = vpOf(), w = Math.min(vp.w, screen.availWidth), h = Math.min(vp.h, screen.availHeight);
+      window.open(frame.dataset.url, "_blank", "width="+w+",height="+h+",noopener,noreferrer");
+    };
+    if(ro) ro.disconnect();
+    ro = new ResizeObserver(()=> layout());
+    ro.observe($("main"));
+    layout();
+  }
+
+  window.addEventListener("resize", layout);
+  renderSeg(); renderVp(); renderStage();
+</script>
+</body>
+</html>
