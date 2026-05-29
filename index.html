@@ -37,16 +37,19 @@
   .vp-btn:hover{background:#202023}
   .vp-btn .lab{font-size:12px; font-weight:500; color:var(--ink)}
   .vp-btn .dim{font-size:11px; color:var(--mut2)}
-  .vp-menu{position:absolute; right:0; top:40px; width:224px; background:var(--surface); border:1px solid var(--line);
+  .vp-menu{position:absolute; right:0; top:40px; width:252px; background:var(--surface); border:1px solid var(--line);
     border-radius:12px; box-shadow:0 16px 40px -10px rgba(0,0,0,.6); padding:4px; z-index:30; display:none}
   .vp-menu.open{display:block; animation:pop .12s ease-out}
   @keyframes pop{from{opacity:0; transform:translateY(-4px)}to{opacity:1; transform:none}}
   .vp-menu .head{font-size:12px; color:var(--mut2); padding:6px 8px}
   .vp-menu .div{height:1px; background:var(--line); margin:4px 0}
+  .vp-group{font-size:10px; font-weight:600; text-transform:uppercase; letter-spacing:.09em; color:var(--mut); padding:8px 8px 4px}
   .vp-item{display:flex; width:100%; align-items:center; justify-content:space-between; gap:16px;
     padding:7px 8px; border:0; background:transparent; border-radius:7px; cursor:pointer; font-family:inherit; text-align:left}
   .vp-item:hover{background:#26262a}
   .vp-item .nm{font-size:14px; color:var(--ink)}
+  .vp-item .tag{display:inline-block; font:600 9px/1.4 'JetBrains Mono',monospace; letter-spacing:.03em; color:var(--mut2);
+    background:#26262a; border:1px solid var(--line); padding:1px 5px; border-radius:5px; margin-left:7px; vertical-align:middle}
   .vp-item .rt{display:flex; align-items:center; gap:8px}
   .vp-item .rt .d{font-size:11px; color:var(--mut2)}
 
@@ -67,8 +70,13 @@
   .iconbtn{display:flex; width:28px; height:28px; align-items:center; justify-content:center; border:0;
     background:transparent; color:var(--mut2); border-radius:7px; cursor:pointer}
   .iconbtn:hover{background:#26262a; color:var(--ink)}
+  .gutter-pick{width:22px; height:22px; padding:0; border:1px solid var(--line); border-radius:6px; background:transparent;
+    cursor:pointer; vertical-align:middle; -webkit-appearance:none; appearance:none}
+  .gutter-pick::-webkit-color-swatch-wrapper{padding:2px}
+  .gutter-pick::-webkit-color-swatch{border:none; border-radius:4px}
+  .gutter-pick::-moz-color-swatch{border:none; border-radius:4px}
   .frame-body{display:flex; justify-content:center; overflow:hidden; background:var(--surface2); padding:12px}
-  .device{position:relative; flex:none; overflow:hidden; background:#fff; border-radius:5px; box-shadow:0 0 0 1px var(--line)}
+  .device{position:relative; flex:none; overflow:hidden; background:#000; border-radius:5px; box-shadow:0 0 0 1px var(--line)}
   .device iframe{border:0; transform-origin:top left; background:#fff}
   .loader{position:absolute; inset:0; z-index:5; display:flex; flex-direction:column; align-items:center; justify-content:center;
     gap:8px; background:rgba(16,16,18,.85); backdrop-filter:blur(2px)}
@@ -105,22 +113,23 @@
 
 <script>
   const TENANTS = [
-    { id:"dev5", label:"Rally TV",  locale:"en",    url:"https://dtv-dev-5.redbull.tv/en" },
-    { id:"dev8", label:"RBTV",      locale:"en_US", url:"https://dtv-dev-8.redbull.tv/en_US" },
-    { id:"dev7", label:"Servus TV", locale:"de",    url:"https://dtv-dev-7.redbull.tv/de" },
+    { id:"dev5", label:"Rally TV",  locale:"en",    bg:"#1A1A1A", url:"https://dtv-dev-5.redbull.tv/en" },
+    { id:"dev8", label:"RBTV",      locale:"en_US", bg:"#00162E", url:"https://dtv-dev-8.redbull.tv/en_US" },
+    { id:"dev7", label:"Servus TV", locale:"de",    bg:"#16171A", url:"https://dtv-dev-7.redbull.tv/de" },
   ];
   const VIEWPORTS = [
-    { id:"4k",   label:"4K",           w:3840, h:2160 },
-    { id:"2k",   label:"2K / QHD",     w:2560, h:1440 },
-    { id:"fhd",  label:"Full HD",      w:1920, h:1080 },
-    { id:"mbp",  label:"MacBook 1440", w:1440, h:900  },
-    { id:"12in", label:'12" Laptop',   w:1280, h:800  },
+    { id:"mb12",     group:"Laptops",  label:'12" MacBook', tag:"Retina", w:1280, h:800  },
+    { id:"mb16",     group:"Laptops",  label:'16" MacBook', tag:"2K",     w:2056, h:1329, padX:64 },
+    { id:"fhd",      group:"Displays", label:"Full HD",     tag:"1080p",  w:1920, h:1080 },
+    { id:"3k",       group:"Displays", label:"3K",          tag:"QHD+",   w:3200, h:1800 },
+    { id:"4k",       group:"Displays", label:"4K",          tag:"UHD",    w:3840, h:2160 },
   ];
   const ICON_RELOAD='<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/></svg>';
   const ICON_EXT='<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h6v6"/><path d="M10 14 21 3"/><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/></svg>';
   const ICON_CHECK='<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fafafa" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>';
 
-  let state = { tenant:"dev5", vpId:"fhd" };
+  let state = { tenant:"dev5", vpId:"mb16" };
+  let gutterColor = "#0d0d0f";   // matches the dark site bg; editable via the swatch
   const vpOf = () => VIEWPORTS.find(v => v.id === state.vpId);
   const tenantOf = () => TENANTS.find(t => t.id === state.tenant);
   const $ = s => document.querySelector(s);
@@ -134,11 +143,16 @@
     const vp = vpOf();
     $("#vpLab").textContent = vp.label;
     $("#vpDim").textContent = vp.w+"×"+vp.h;
-    $("#vpItems").innerHTML = VIEWPORTS.map(v=>`
-      <button class="vp-item" data-id="${v.id}">
-        <span class="nm">${v.label}</span>
-        <span class="rt"><span class="d mono">${v.w}×${v.h}</span>${v.id===state.vpId?ICON_CHECK:''}</span>
-      </button>`).join("");
+    let html = "", lastGroup = null;
+    VIEWPORTS.forEach(v=>{
+      if(v.group !== lastGroup){ html += `<div class="vp-group">${v.group}</div>`; lastGroup = v.group; }
+      html += `
+        <button class="vp-item" data-id="${v.id}">
+          <span class="nm">${v.label}${v.tag?`<span class="tag">${v.tag}</span>`:''}</span>
+          <span class="rt"><span class="d mono">${v.w}×${v.h}</span>${v.id===state.vpId?ICON_CHECK:''}</span>
+        </button>`;
+    });
+    $("#vpItems").innerHTML = html;
     $("#vpItems").querySelectorAll(".vp-item").forEach(b=>b.onclick=()=>{
       state.vpId=b.dataset.id; $("#vpMenu").classList.remove("open"); renderVp(); layout();
     });
@@ -150,16 +164,22 @@
   function layout(){
     const frame = $(".frame"); if(!frame) return;
     const vp = vpOf();
+    const padX = vp.padX || 0;                            // cosmetic side gutters
     const main = $("main");
     const availW = main.clientWidth - 48;                 // main h-padding
     const availH = main.clientHeight - 48 - 46 - 24 - 6;  // main v-pad, frame head, body pad, breathing
-    let scale = Math.min(1, availW/vp.w, availH/vp.h);
+    const totalW = vp.w + padX*2;
+    let scale = Math.min(1, availW/totalW, availH/vp.h);
     if(!(scale>0)) scale = 0.3;
-    const dispW = Math.round(vp.w*scale), dispH = Math.round(vp.h*scale);
+    const dispW = Math.round(totalW*scale), dispH = Math.round(vp.h*scale);
     const dev = frame.querySelector(".device");
     const ifr = frame.querySelector("iframe");
     dev.style.width = dispW+"px";
     dev.style.height = dispH+"px";
+    dev.style.paddingLeft = Math.round(padX*scale)+"px";  // pushes iframe in; right gutter from extra width
+    dev.style.background = padX ? gutterColor : "#000";
+    const pick = frame.querySelector(".gutter-pick");
+    if(pick) pick.style.display = padX ? "inline-flex" : "none";
     ifr.style.width = vp.w+"px";
     ifr.style.height = vp.h+"px";
     ifr.style.transform = "scale("+scale+")";
@@ -170,6 +190,7 @@
   let ro;
   function renderStage(){
     const t = tenantOf();
+    gutterColor = t.bg || gutterColor;   // gutter matches the active site's background
     $("#stage").innerHTML = `
       <div class="frame" data-url="${t.url}">
         <div class="frame-head">
@@ -178,6 +199,7 @@
             <span class="frame-name">${t.label}</span><span class="chip mono">${t.locale}</span>
           </div>
           <div class="frame-actions">
+            <input type="color" class="gutter-pick" value="${gutterColor}" title="Match gutter to site background" />
             <span class="dims mono"></span>
             <button class="iconbtn" data-act="reload" title="Reload">${ICON_RELOAD}</button>
             <button class="iconbtn" data-act="open" title="Open at this size">${ICON_EXT}</button>
@@ -198,6 +220,8 @@
       const vp = vpOf(), w = Math.min(vp.w, screen.availWidth), h = Math.min(vp.h, screen.availHeight);
       window.open(frame.dataset.url, "_blank", "width="+w+",height="+h+",noopener,noreferrer");
     };
+    const pick = frame.querySelector(".gutter-pick");
+    pick.oninput = ()=>{ gutterColor = pick.value; layout(); };
     if(ro) ro.disconnect();
     ro = new ResizeObserver(()=> layout());
     ro.observe($("main"));
